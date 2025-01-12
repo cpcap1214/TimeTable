@@ -42,9 +42,9 @@ struct AppEntryView: View {
     var body: some View {
         Group {
             if isLoggedIn {
-                ContentView(isLoggedIn: $isLoggedIn)// 用戶已登入，進入主頁面
+                ContentView(isLoggedIn: $isLoggedIn)
             } else {
-                LoginView(isLoggedIn: $isLoggedIn) // 用戶未登入，進入登入頁面
+                LoginView(isLoggedIn: $isLoggedIn)
             }
         }
         .onAppear(perform: checkLoginStatus)
