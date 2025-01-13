@@ -63,79 +63,173 @@ struct LoginView: View {
     @State private var password = ""
     @State private var name = ""
     @State private var errorMessage = ""
+    @State private var isRegistering = false
+    @State private var isLoading = false
     @State private var showHowToUse = false
+    
     var body: some View {
-        VStack {
-            Text("登入")
-                .font(.largeTitle)
-                .padding()
-
-            TextField("Email", text: $email)
-                .keyboardType(.emailAddress)
-                .autocapitalization(.none)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-
-            SecureField("Password", text: $password)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-
-            TextField("名字", text: $name)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-
-            Button(action: login) {
-                Text("登入")
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .cornerRadius(8)
-            }
-            .padding()
-
-            Button(action: register) {
-                Text("註冊")
-                    .foregroundColor(.blue)
-                    .padding()
-            }
-            Button(action: { showHowToUse.toggle() }) {
-                Text("如何使用？")
+        ZStack {
+            // 背景漸層
+            LinearGradient(
+                gradient: Gradient(colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                // Logo 和標題
+                VStack(spacing: 15) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 50))
+                        .foregroundColor(.blue)
                     
-            }
-
-            if !errorMessage.isEmpty {
-                Text(errorMessage)
-                    .foregroundColor(.red)
+                    Text("不揪？")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    Text("分享課表 找到共同時間")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+                .padding(.top, 100)
+                
+                // 輸入表單
+                VStack(spacing: 15) {
+                    // Email 輸入框
+                    HStack {
+                        Image(systemName: "envelope")
+                            .foregroundColor(.gray)
+                            .frame(width: 30)
+                        TextField("", text: $email)
+                            .placeholder(when: email.isEmpty) {
+                                Text("Email").foregroundColor(.gray)
+                            }
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .foregroundColor(.black)
+                    }
                     .padding()
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    
+                    // 密碼輸入框
+                    HStack {
+                        Image(systemName: "lock")
+                            .foregroundColor(.gray)
+                            .frame(width: 30)
+                        SecureField("", text: $password)
+                            .placeholder(when: password.isEmpty) {
+                                Text("密碼").foregroundColor(.gray)
+                            }
+                            .foregroundColor(.black)
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    
+                    // 名字輸入框（註冊時顯示）
+                    if isRegistering {
+                        HStack {
+                            Image(systemName: "person")
+                                .foregroundColor(.gray)
+                                .frame(width: 30)
+                            TextField("", text: $name)
+                                .placeholder(when: name.isEmpty) {
+                                    Text("名字").foregroundColor(.gray)
+                                }
+                                .foregroundColor(.black)
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(10)
+                    }
+                }
+                .padding(.horizontal, 20)
+                
+                // 錯誤訊息
+                if !errorMessage.isEmpty {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .font(.footnote)
+                }
+                
+                // 登入按鈕
+                Button(action: { isRegistering ? register() : login() }) {
+                    HStack {
+                        if isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .padding(.trailing, 5)
+                        }
+                        Text(isRegistering ? "註冊" : "登入")
+                            .fontWeight(.bold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .padding(.horizontal, 20)
+                .disabled(isLoading)
+                
+                // 註冊和使用說明按鈕
+                VStack(spacing: 15) {
+                    Button(action: { withAnimation { isRegistering.toggle() } }) {
+                        Text(isRegistering ? "已有帳號？登入" : "還沒有帳號？註冊")
+                            .foregroundColor(.blue)
+                    }
+                    
+                    Button(action: { showHowToUse.toggle() }) {
+                        Text("如何使用？")
+                            .foregroundColor(.gray)
+                    }
+                }
+                
+                Spacer()
             }
         }
         .alert("如何使用？", isPresented: $showHowToUse) {
-            Button("關閉") { }
+            Button("關閉", role: .cancel) { }
         } message: {
-            Text("歡迎來到不揪！這是一個分享課表的APP，你可以在這裡管理自己的課表，也可以查看好友的課表。\n首次使用的用戶，要先在註冊時填寫名字，以便好友能夠知道你叫什麼。之後再次登入的時候就不需要輸入名字。\n登入後，你可以在「課表」頁面查看自己的課表，也可以在「好友」頁面查看好友的課表。\n如果有任何問題或建議，請DM我的IG: @justin.chung.2547。")
+            Text("歡迎來到不揪！這是一個分享課表的APP，你可以在這裡管理自己的課表，也可以查看好友的課表。")
         }
-        .padding()
     }
-
-    func login() {
+    
+    // 登入函數
+    private func login() {
+        isLoading = true
         Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+            isLoading = false
             if let error = error {
                 errorMessage = "登入失敗：\(error.localizedDescription)"
             } else {
-                isLoggedIn = true // 通知外部視圖用戶已登入
+                withAnimation {
+                    isLoggedIn = true
+                }
             }
         }
     }
-
-    func register() {
+    
+    // 註冊函數
+    private func register() {
+        guard !name.isEmpty else {
+            errorMessage = "請輸入名字"
+            return
+        }
+        
+        isLoading = true
         Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
             if let error = error {
+                isLoading = false
                 errorMessage = "註冊失敗：\(error.localizedDescription)"
                 return
             }
 
             guard let user = authResult?.user else {
+                isLoading = false
                 errorMessage = "註冊失敗：無法取得用戶資訊"
                 return
             }
@@ -149,15 +243,17 @@ struct LoginView: View {
             ]
             
             db.collection("users").document(user.uid).setData(userData) { error in
+                isLoading = false
                 if let error = error {
                     errorMessage = "使用者資料儲存失敗：\(error.localizedDescription)"
                 } else {
-                    errorMessage = "註冊成功！"
+                    withAnimation {
+                        isLoggedIn = true
+                    }
                 }
             }
         }
     }
-
 }
 
 struct TimeTableView: View {
@@ -769,6 +865,48 @@ struct SettingsView: View {
                 userEmail = document.data()?["email"] as? String ?? "未知 Email"
             }
         }
+    }
+}
+
+// 添加 placeholder 擴展
+extension View {
+    func placeholder<Content: View>(
+        when shouldShow: Bool,
+        alignment: Alignment = .leading,
+        @ViewBuilder placeholder: () -> Content) -> some View {
+        
+        ZStack(alignment: alignment) {
+            placeholder().opacity(shouldShow ? 1 : 0)
+            self
+        }
+    }
+}
+
+// 添加十六進制顏色擴展
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }
 
