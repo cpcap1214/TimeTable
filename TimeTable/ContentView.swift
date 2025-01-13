@@ -263,6 +263,10 @@ struct TimeTableView: View {
     @State private var selectedCourses: [[Bool]] = Array(repeating: Array(repeating: false, count: 5), count: 10)
     @State private var saveMessage = ""
 
+    // 添加時間常量
+    let startTimes = ["8:10", "9:10", "10:20", "11:20", "12:20", "13:20", "14:20", "15:30", "16:30", "17:30"]
+    let endTimes = ["9:00", "10:00", "11:10", "12:10", "13:10", "14:10", "15:10", "16:20", "17:20", "18:20"]
+    
     var body: some View {
         VStack {
             HStack {
@@ -282,7 +286,7 @@ struct TimeTableView: View {
                             selectedCourses[timeIndex][dayIndex].toggle()
                         } label: {
                             RoundedRectangle(cornerRadius: 5)
-                                .fill(selectedCourses[timeIndex][dayIndex] ? Color.blue : Color.gray)
+                                .fill(getCellColor(timeIndex: timeIndex, dayIndex: dayIndex))
                                 .frame(width: 50, height: 50)
                         }
                     }
@@ -390,6 +394,40 @@ struct TimeTableView: View {
         }
     }
 
+    // 新增獲取方塊顏色的函數
+    private func getCellColor(timeIndex: Int, dayIndex: Int) -> Color {
+        if selectedCourses[timeIndex][dayIndex] {
+            if isCurrentTimeSlot(timeIndex: timeIndex) && isCurrentDay(dayIndex: dayIndex) {
+                return .red  // 當前正在進行的課程顯示為紅色
+            }
+            return .blue    // 其他課程顯示為藍色
+        }
+        return .gray       // 沒有課程顯示為灰色
+    }
+    
+    // 新增檢查是否是當前時間段的函數
+    private func isCurrentTimeSlot(timeIndex: Int) -> Bool {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "HH:mm"
+        let currentTimeString = dateFormatter.string(from: Date())
+        
+        guard let currentTime = dateFormatter.date(from: currentTimeString),
+              let startTime = dateFormatter.date(from: startTimes[timeIndex]),
+              let endTime = dateFormatter.date(from: endTimes[timeIndex]) else {
+            return false
+        }
+        
+        return currentTime >= startTime && currentTime <= endTime
+    }
+    
+    // 新增檢查是否是當前星期的函數
+    private func isCurrentDay(dayIndex: Int) -> Bool {
+        let calendar = Calendar.current
+        let weekday = calendar.component(.weekday, from: Date())
+        // 將 weekday（1=星期日）轉換為我們的格式（0=星期一）
+        let adjustedWeekday = weekday == 1 ? 6 : weekday - 2
+        return adjustedWeekday == dayIndex
+    }
 }
 
 struct FriendsTimeTableView: View {
