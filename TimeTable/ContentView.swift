@@ -396,11 +396,11 @@ struct TimeTableView: View {
 
     // 新增獲取方塊顏色的函數
     private func getCellColor(timeIndex: Int, dayIndex: Int) -> Color {
+        if isCurrentTimeSlot(timeIndex: timeIndex) && isCurrentDay(dayIndex: dayIndex) {
+            return .red  // 當前時間段顯示為紅色，無論是否有課
+        }
         if selectedCourses[timeIndex][dayIndex] {
-            if isCurrentTimeSlot(timeIndex: timeIndex) && isCurrentDay(dayIndex: dayIndex) {
-                return .red  // 當前正在進行的課程顯示為紅色
-            }
-            return .blue    // 其他課程顯示為藍色
+            return .blue    // 其他有課的時段顯示為藍色
         }
         return .gray       // 沒有課程顯示為灰色
     }
@@ -734,13 +734,11 @@ struct FriendTimeTableView: View {
     
     // 獲取方塊顏色
     private func getCellColor(timeIndex: Int, dayIndex: Int) -> Color {
-        // 如果該格子有課
+        if isCurrentTimeSlot(timeIndex: timeIndex) && isCurrentDay(dayIndex: dayIndex) {
+            return .red  // 當前時間段顯示為紅色，無論是否有課
+        }
         if timetable[timeIndex][dayIndex] {
-            // 檢查是否是當前時間的課
-            if isCurrentTimeSlot(timeIndex: timeIndex) && isCurrentDay(dayIndex: dayIndex) {
-                return .red  // 當前正在進行的課程顯示為紅色
-            }
-            return .blue    // 其他課程顯示為藍色
+            return .blue    // 其他有課的時段顯示為藍色
         }
         return .gray       // 沒有課程顯示為灰色
     }
