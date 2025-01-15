@@ -454,6 +454,7 @@ struct FriendsTimeTableView: View {
     @State private var errorMessage = ""
     @State private var availableFriends: [(uid: String, email: String, name: String)] = []
     @State private var busyFriends: [(uid: String, email: String, name: String)] = []
+    @State private var showUsageInstructions = false
     
     // 添加時間常量
     let startTimes = ["8:10", "9:10", "10:20", "11:20", "12:20", "13:20", "14:20", "15:30", "16:30", "17:30"]
@@ -521,6 +522,20 @@ struct FriendsTimeTableView: View {
                 Button("確定") {}
             } message: {
                 Text(errorMessage)
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showUsageInstructions.toggle()
+                    }) {
+                        Image(systemName: "questionmark.circle")
+                    }
+                }
+            }
+            .alert("使用說明", isPresented: $showUsageInstructions) {
+                Button("關閉", role: .cancel) { }
+            } message: {
+                Text("在這裡你可以查看好友的課表，並查看他們是否有空。\n點擊好友名稱以查看詳細課表，或滑動以刪除好友。")
             }
         }
     }
@@ -965,5 +980,5 @@ extension Color {
 }
 
 #Preview {
-    TimeTableView()
+    FriendsTimeTableView()
 }
