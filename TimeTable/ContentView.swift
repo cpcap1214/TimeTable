@@ -627,7 +627,7 @@ struct FriendsTimeTableView: View {
             userRef.updateData([
                 "friends": FieldValue.arrayUnion([
                     [
-                        "uid": friendUID, 
+                        "uid": friendUID,
                         "email": friendEmail,
                         "name": friendName
                     ]
@@ -656,7 +656,7 @@ struct FriendsTimeTableView: View {
             userRef.updateData([
                 "friends": FieldValue.arrayRemove([
                     [
-                        "uid": friendToRemove.uid, 
+                        "uid": friendToRemove.uid,
                         "email": friendToRemove.email,
                         "name": friendToRemove.name
                     ]
@@ -949,4 +949,3 @@ extension Color {
 #Preview {
     LoginView(isLoggedIn: .constant(false))
 }
-
