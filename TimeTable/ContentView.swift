@@ -262,65 +262,83 @@ struct TimeTableView: View {
     
     @State private var selectedCourses: [[Bool]] = Array(repeating: Array(repeating: false, count: 5), count: 10)
     @State private var saveMessage = ""
+    @State private var showUsageInstructions = false
 
     // 添加時間常量
     let startTimes = ["8:10", "9:10", "10:20", "11:20", "12:20", "13:20", "14:20", "15:30", "16:30", "17:30"]
     let endTimes = ["9:00", "10:00", "11:10", "12:10", "13:10", "14:10", "15:10", "16:20", "17:20", "18:20"]
     
     var body: some View {
-        VStack {
-            HStack {
-                Text("")
-                    .frame(width: 30) // 空白佔位符對齊課表
-                ForEach(days, id: \.self) { day in
-                    Text(day)
-                        .frame(width: 50)
-                }
-            }
-            ForEach(times.indices, id: \.self) { timeIndex in
+        NavigationView {
+            VStack {
                 HStack {
-                    Text(times[timeIndex])
-                        .frame(width: 30)
-                    ForEach(days.indices, id: \.self) { dayIndex in
-                        Button {
-                            selectedCourses[timeIndex][dayIndex].toggle()
-                        } label: {
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(getCellColor(timeIndex: timeIndex, dayIndex: dayIndex))
-                                .frame(width: 50, height: 50)
+                    Text("")
+                        .frame(width: 30) // 空白佔位符對齊課表
+                    ForEach(days, id: \.self) { day in
+                        Text(day)
+                            .frame(width: 50)
+                    }
+                }
+                ForEach(times.indices, id: \.self) { timeIndex in
+                    HStack {
+                        Text(times[timeIndex])
+                            .frame(width: 30)
+                        ForEach(days.indices, id: \.self) { dayIndex in
+                            Button {
+                                selectedCourses[timeIndex][dayIndex].toggle()
+                            } label: {
+                                RoundedRectangle(cornerRadius: 5)
+                                    .fill(getCellColor(timeIndex: timeIndex, dayIndex: dayIndex))
+                                    .frame(width: 50, height: 50)
+                            }
                         }
                     }
                 }
-            }
 
-            HStack {
-                Button(action: clearTimeTable) {
-                    Text("清除課表")
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.red)
-                        .cornerRadius(8)
+                HStack {
+                    Button(action: clearTimeTable) {
+                        Text("清除課表")
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.red)
+                            .cornerRadius(8)
+                    }
+                    Button(action: saveTimeTableToFirestore) {
+                        Text("儲存課表")
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.blue)
+                            .cornerRadius(8)
+                    }
                 }
-                Button(action: saveTimeTableToFirestore) {
-                    Text("儲存課表")
-                        .foregroundColor(.white)
+                Spacer()
+
+                // 儲存成功或失敗訊息
+                if !saveMessage.isEmpty {
+                    Text(saveMessage)
+                        .foregroundColor(.green)
                         .padding()
-                        .background(Color.blue)
-                        .cornerRadius(8)
                 }
             }
-            Spacer()
-
-            // 儲存成功或失敗訊息
-            if !saveMessage.isEmpty {
-                Text(saveMessage)
-                    .foregroundColor(.green)
-                    .padding()
+            .onAppear(perform: loadTimeTable)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showUsageInstructions.toggle()
+                    }) {
+                        Image(systemName: "questionmark.circle")
+                    }
+                }
+            }
+            .alert("使用說明", isPresented: $showUsageInstructions) {
+                Button("關閉", role: .cancel) { }
+            } message: {
+                Text("點擊方塊以選擇課程，點擊已選中的方塊以取消選擇。\n選擇完所有的課程後，請按下方的「儲存課表」按鈕。\n若想要清除課表，請按下方的「清除課表」按鈕。")
             }
         }
-        .onAppear(perform: loadTimeTable)
     }
 
+    
     // 儲存課表到 Firestore
     private func saveTimeTableToFirestore() {
         guard let user = Auth.auth().currentUser else {
@@ -947,5 +965,5 @@ extension Color {
 }
 
 #Preview {
-    LoginView(isLoggedIn: .constant(false))
+    TimeTableView()
 }
