@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1BB8002E2D2C0A8E00B17245"
-               BuildableName = "TimeTable.app"
+               BuildableName = "&#x4e0d;&#x63ea;&#xff1f;.app"
                BlueprintName = "TimeTable"
                ReferencedContainer = "container:TimeTable.xcodeproj">
             </BuildableReference>
@@ -45,7 +45,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1BB8002E2D2C0A8E00B17245"
-            BuildableName = "TimeTable.app"
+            BuildableName = "&#x4e0d;&#x63ea;&#xff1f;.app"
             BlueprintName = "TimeTable"
             ReferencedContainer = "container:TimeTable.xcodeproj">
          </BuildableReference>
@@ -68,7 +68,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1BB8002E2D2C0A8E00B17245"
-            BuildableName = "TimeTable.app"
+            BuildableName = "&#x4e0d;&#x63ea;&#xff1f;.app"
             BlueprintName = "TimeTable"
             ReferencedContainer = "container:TimeTable.xcodeproj">
          </BuildableReference>
