@@ -25,43 +25,58 @@ struct FriendTimeTableView: View {
     let startTimes = ["8:10", "9:10", "10:20", "11:20", "12:20", "13:20", "14:20", "15:30", "16:30", "17:30"]
     let endTimes = ["9:00", "10:00", "11:10", "12:10", "13:10", "14:10", "15:10", "16:20", "17:20", "18:20"]
 
+    @Environment(\.colorScheme) var colorScheme
+    
     var body: some View {
         ScrollView {
-            VStack {
-                Text("\(friendName)的課表")
-                    .font(.headline)
-                    .padding()
-
-                if timetable.isEmpty {
-                    Text("尚未加載課表")
-                        .foregroundColor(.gray)
-                } else {
-                    VStack {
-                        HStack {
-                            Text("")
-                                .frame(width: 30)
-                            ForEach(days, id: \.self) { day in
-                                Text(day)
-                                    .frame(width: 50)
-                            }
+            VStack(spacing: 15) {
+                // 星期列
+                HStack {
+                    Text("")
+                        .frame(width: 40)
+                    ForEach(days, id: \.self) { day in
+                        Text(day)
+                            .font(.system(size: 16, weight: .medium))
+                            .frame(width: 60)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.blue.opacity(0.1))
+                            )
+                    }
+                }
+                .padding(.horizontal)
+                
+                // 課表格子
+                ForEach(times.indices, id: \.self) { timeIndex in
+                    HStack {
+                        VStack(spacing: 2) {
+                            Text(times[timeIndex])
+                                .font(.system(size: 14, weight: .medium))
+                            Text(startTimes[timeIndex])
+                                .font(.system(size: 10))
+                                .foregroundColor(.gray)
                         }
-                        ForEach(times.indices, id: \.self) { timeIndex in
-                            HStack {
-                                Text(times[timeIndex])
-                                    .frame(width: 30)
-                                ForEach(days.indices, id: \.self) { dayIndex in
-                                    RoundedRectangle(cornerRadius: 5)
-                                        .fill(getCellColor(timeIndex: timeIndex, dayIndex: dayIndex))
-                                        .frame(width: 50, height: 50)
-                                }
-                            }
+                        .frame(width: 40)
+                        
+                        ForEach(days.indices, id: \.self) { dayIndex in
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(getCellColor(timeIndex: timeIndex, dayIndex: dayIndex))
+                                .frame(width: 60, height: 60)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                                .shadow(color: getCellColor(timeIndex: timeIndex, dayIndex: dayIndex).opacity(0.3),
+                                        radius: timetable[timeIndex][dayIndex] ? 4 : 0)
                         }
                     }
-                    .padding()
+                    .padding(.horizontal)
                 }
             }
+            .padding(.vertical)
         }
-        .onAppear(perform: loadTimetable)
+        .navigationTitle("\(friendName)的課表")
         .alert("錯誤", isPresented: Binding<Bool>(
             get: { !errorMessage.isEmpty },
             set: { _ in errorMessage = "" }
@@ -70,17 +85,18 @@ struct FriendTimeTableView: View {
         } message: {
             Text(errorMessage)
         }
+        .onAppear(perform: loadTimetable)
     }
     
-    // 獲取方塊顏色
+    // 更新顏色函數
     private func getCellColor(timeIndex: Int, dayIndex: Int) -> Color {
         if isCurrentTimeSlot(timeIndex: timeIndex) && isCurrentDay(dayIndex: dayIndex) {
-            return .red  // 當前時間段顯示為紅色，無論是否有課
+            return timetable[timeIndex][dayIndex] ? .red : .red.opacity(0.3)
         }
         if timetable[timeIndex][dayIndex] {
-            return .blue    // 其他有課的時段顯示為藍色
+            return .blue.opacity(0.8)
         }
-        return .gray       // 沒有課程顯示為灰色
+        return colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)
     }
     
     // 檢查是否是當前時間段

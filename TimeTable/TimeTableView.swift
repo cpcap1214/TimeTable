@@ -18,66 +18,119 @@ struct TimeTableView: View {
     @State private var selectedCourses: [[Bool]] = Array(repeating: Array(repeating: false, count: 5), count: 10)
     @State private var saveMessage = ""
     @State private var showUsageInstructions = false
+    @State private var showAlert = false
+    @State private var alertMessage = ""
 
     // 添加時間常量
     let startTimes = ["8:10", "9:10", "10:20", "11:20", "12:20", "13:20", "14:20", "15:30", "16:30", "17:30"]
     let endTimes = ["9:00", "10:00", "11:10", "12:10", "13:10", "14:10", "15:10", "16:20", "17:20", "18:20"]
     
+    // 添加新的狀態變量
+    @Environment(\.colorScheme) var colorScheme
+    @State private var isSaving = false
+    
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack {
+                VStack(spacing: 15) {
+                    // 星期列
                     HStack {
                         Text("")
-                            .frame(width: 30) // 空白佔位符對齊課表
+                            .frame(width: 40)
                         ForEach(days, id: \.self) { day in
                             Text(day)
-                                .frame(width: 50)
+                                .font(.system(size: 16, weight: .medium))
+                                .frame(width: 60)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.blue.opacity(0.1))
+                                )
                         }
                     }
+                    .padding(.horizontal)
+                    
+                    // 課表格子
                     ForEach(times.indices, id: \.self) { timeIndex in
                         HStack {
-                            Text(times[timeIndex])
-                                .frame(width: 30)
+                            VStack(spacing: 2) {
+                                Text(times[timeIndex])
+                                    .font(.system(size: 14, weight: .medium))
+                                Text(startTimes[timeIndex])
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(width: 40)
+                            
                             ForEach(days.indices, id: \.self) { dayIndex in
                                 Button {
                                     selectedCourses[timeIndex][dayIndex].toggle()
                                 } label: {
-                                    RoundedRectangle(cornerRadius: 5)
+                                    RoundedRectangle(cornerRadius: 10)
                                         .fill(getCellColor(timeIndex: timeIndex, dayIndex: dayIndex))
-                                        .frame(width: 50, height: 50)
+                                        .frame(width: 60, height: 60)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                        .shadow(color: getCellColor(timeIndex: timeIndex, dayIndex: dayIndex).opacity(0.3),
+                                                radius: selectedCourses[timeIndex][dayIndex] ? 4 : 0)
                                 }
                             }
                         }
+                        .padding(.horizontal)
                     }
 
-                    HStack {
+                    // 修改按鈕組
+                    HStack(spacing: 20) {
                         Button(action: clearTimeTable) {
-                            Text("清除課表")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.red)
-                                .cornerRadius(8)
-                        }
-                        Button(action: saveTimeTableToFirestore) {
-                            Text("儲存課表")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.blue)
-                                .cornerRadius(8)
-                        }
-                    }
-                    Spacer()
-
-                    // 儲存成功或失敗訊息
-                    if !saveMessage.isEmpty {
-                        Text(saveMessage)
-                            .foregroundColor(.green)
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("清除課表")
+                            }
+                            .foregroundColor(.white)
                             .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.red)
+                                    .shadow(radius: 3)
+                            )
+                        }
+                        .disabled(isSaving)
+                        
+                        Button(action: saveTimeTableToFirestore) {
+                            HStack {
+                                if isSaving {
+                                    ProgressView()
+                                        .tint(.white)
+                                } else {
+                                    Image(systemName: "square.and.arrow.down")
+                                    Text("儲存課表")
+                                }
+                            }
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.blue)
+                                    .shadow(radius: 3)
+                            )
+                        }
+                        .disabled(isSaving)
                     }
+                    .padding(.top, 20)
                 }
+                .padding(.vertical)
             }
-            .onAppear(perform: loadTimeTable)
+            .navigationTitle("課表")
+            .alert("提示", isPresented: $showAlert) {
+                Button("確定", role: .cancel) { }
+            } message: {
+                Text(alertMessage)
+            }
+            .onAppear {
+                loadTimeTable()
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -96,12 +149,18 @@ struct TimeTableView: View {
     }
 
     
-    // 儲存課表到 Firestore
+    // 修改儲存函數
     private func saveTimeTableToFirestore() {
         guard let user = Auth.auth().currentUser else {
-            saveMessage = "請先登入"
+            alertMessage = "請先登入"
+            showAlert = true
             return
         }
+        
+        withAnimation {
+            isSaving = true
+        }
+        
         let db = Firestore.firestore()
         
         // 將課表轉換為字典格式
@@ -117,10 +176,17 @@ struct TimeTableView: View {
         ]
         
         db.collection("timetables").document(user.uid).setData(dataToSave) { error in
-            if let error = error {
-                saveMessage = "儲存失敗：\(error.localizedDescription)"
-            } else {
-                saveMessage = "課表已成功儲存！"
+            DispatchQueue.main.async {
+                withAnimation {
+                    isSaving = false
+                }
+                
+                if let error = error {
+                    alertMessage = "儲存失敗：\(error.localizedDescription)"
+                } else {
+                    alertMessage = "課表已成功儲存！"
+                }
+                showAlert = true
             }
         }
     }
@@ -158,10 +224,8 @@ struct TimeTableView: View {
         db.collection("timetables").document(user.uid).getDocument { document, error in
             if let document = document, document.exists {
                 if let timetable = document.data()?["timetable"] as? [String: [Bool]] {
-                    // 按行索引排序並轉換回嵌套陣列
                     let sortedKeys = timetable.keys.sorted { $0 < $1 }
                     selectedCourses = sortedKeys.compactMap { timetable[$0] }
-                    saveMessage = "課表已載入"
                 }
             } else {
                 print("無法找到課表：\(error?.localizedDescription ?? "未知錯誤")")
@@ -169,15 +233,15 @@ struct TimeTableView: View {
         }
     }
 
-    // 新增獲取方塊顏色的函數
+    // 更新顏色函數
     private func getCellColor(timeIndex: Int, dayIndex: Int) -> Color {
         if isCurrentTimeSlot(timeIndex: timeIndex) && isCurrentDay(dayIndex: dayIndex) {
-            return .red  // 當前時間段顯示為紅色，無論是否有課
+            return selectedCourses[timeIndex][dayIndex] ? .red : .red.opacity(0.3)
         }
         if selectedCourses[timeIndex][dayIndex] {
-            return .blue    // 其他有課的時段顯示為藍色
+            return .blue.opacity(0.8)
         }
-        return .gray       // 沒有課程顯示為灰色
+        return colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)
     }
     
     // 新增檢查是否是當前時間段的函數
