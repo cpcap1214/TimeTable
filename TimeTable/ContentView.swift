@@ -31,7 +31,6 @@ struct ContentView: View {
                     .tag(3)
                 }
             }
-            .padding()
             .preferredColorScheme(isDarkMode ? .dark : .light)
         }
     }
@@ -43,7 +42,7 @@ struct DeveloperInfoView: View {
         List {
             Section("About me") {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Hi, I’m Justin, a freshman at National Taiwan University majoring in Information Management.")
+                    Text("Hi, I'm Justin, a freshman at National Taiwan University majoring in Information Management.")
                     Text("If you'd like to contact me or report any bugs, feel free to DM me on Instagram or send me an email.")
                 }
                 .padding(.vertical, 8)

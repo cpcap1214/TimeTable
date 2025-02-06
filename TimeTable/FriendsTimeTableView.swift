@@ -24,57 +24,118 @@ struct FriendsTimeTableView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section(header: Text("新增好友")) {
-                    TextField("輸入好友的 Email", text: $friendEmailInput)
-                        .keyboardType(.emailAddress)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                    Button("加好友") {
-                        addFriend()
+            List {
+                Section(header: Text("新增好友").foregroundColor(.blue)) {
+                    HStack {
+                        Image(systemName: "person.fill.badge.plus")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 20))
+                        TextField("輸入好友的 Email", text: $friendEmailInput)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .autocapitalization(.none)
                     }
-                    .foregroundColor(.blue)
+                    Button(action: addFriend) {
+                        HStack {
+                            Spacer()
+                            Text("加好友")
+                                .fontWeight(.medium)
+                            Spacer()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .padding(.vertical, 5)
                 }
 
                 // 有空的朋友
-                Section(header: Text("現在有空的朋友")) {
-                    ForEach(availableFriends, id: \.uid) { friend in
-                        NavigationLink(destination: FriendTimeTableView(
-                            friendUID: friend.uid,
-                            friendEmail: friend.email,
-                            friendName: friend.name
-                        )) {
-                            Text(friend.name)
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                deleteFriend(friendUID: friend.uid)
-                            } label: {
-                                Label("刪除", systemImage: "trash")
+                Section(header: 
+                    HStack {
+                        Image(systemName: "person.fill.checkmark")
+                            .foregroundColor(.green)
+                        Text("現在有空的朋友")
+                            .foregroundColor(.green)
+                    }
+                ) {
+                    if availableFriends.isEmpty {
+                        Text("現在有課的朋友")
+                            .foregroundColor(.gray)
+                            .italic()
+                    } else {
+                        ForEach(availableFriends, id: \.uid) { friend in
+                            NavigationLink(destination: FriendTimeTableView(
+                                friendUID: friend.uid,
+                                friendEmail: friend.email,
+                                friendName: friend.name
+                            )) {
+                                HStack {
+                                    Image(systemName: "person.circle.fill")
+                                        .foregroundColor(.green)
+                                        .font(.system(size: 30))
+                                    VStack(alignment: .leading) {
+                                        Text(friend.name)
+                                            .font(.headline)
+                                        Text(friend.email)
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                }
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    deleteFriend(friendUID: friend.uid)
+                                } label: {
+                                    Label("刪除", systemImage: "trash")
+                                }
                             }
                         }
                     }
                 }
                 
                 // 沒空的朋友
-                Section(header: Text("現在有課的朋友")) {
-                    ForEach(busyFriends, id: \.uid) { friend in
-                        NavigationLink(destination: FriendTimeTableView(
-                            friendUID: friend.uid,
-                            friendEmail: friend.email,
-                            friendName: friend.name
-                        )) {
-                            Text(friend.name)
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                deleteFriend(friendUID: friend.uid)
-                            } label: {
-                                Label("刪除", systemImage: "trash")
+                Section(header: 
+                    HStack {
+                        Image(systemName: "person.fill.xmark")
+                            .foregroundColor(.red)
+                        Text("現在有課的朋友")
+                            .foregroundColor(.red)
+                    }
+                ) {
+                    if busyFriends.isEmpty {
+                        Text("目前沒有正在上課的朋友")
+                            .foregroundColor(.gray)
+                            .italic()
+                    } else {
+                        ForEach(busyFriends, id: \.uid) { friend in
+                            NavigationLink(destination: FriendTimeTableView(
+                                friendUID: friend.uid,
+                                friendEmail: friend.email,
+                                friendName: friend.name
+                            )) {
+                                HStack {
+                                    Image(systemName: "person.circle.fill")
+                                        .foregroundColor(.red)
+                                        .font(.system(size: 30))
+                                    VStack(alignment: .leading) {
+                                        Text(friend.name)
+                                            .font(.headline)
+                                        Text(friend.email)
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                }
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    deleteFriend(friendUID: friend.uid)
+                                } label: {
+                                    Label("刪除", systemImage: "trash")
+                                }
                             }
                         }
                     }
                 }
             }
+            .listStyle(InsetGroupedListStyle())
             .navigationTitle("朋友的課表")
             .onAppear(perform: loadFriends)
             .alert("錯誤", isPresented: Binding<Bool>(

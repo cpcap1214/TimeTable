@@ -19,58 +19,79 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 Section("帳號資訊") {
-                    HStack {
-                        Text("名稱")
-                        Spacer()
+                    VStack(spacing: 15) {
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.blue)
+                            .padding(.top, 10)
+                        
                         Text(userName)
-                            .foregroundColor(.gray)
-                    }
-                    HStack {
-                        Text("Email")
-                        Spacer()
+                            .font(.title2)
+                            .bold()
+                        
                         Text(userEmail)
+                            .font(.subheadline)
                             .foregroundColor(.gray)
+                            .padding(.bottom, 10)
                     }
+                    .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.clear)
                 }
                 
                 Section("帳號") {
-                    Button("登出") {
+                    Button(action: {
                         do {
                             try Auth.auth().signOut()
                             isLoggedIn = false
                         } catch {
                             print("登出失敗：\(error.localizedDescription)")
                         }
+                    }) {
+                        HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                            Text("登出")
+                        }
+                        .foregroundColor(.blue)
                     }
                     
-                    Button("刪除帳號") {
-                        showDeleteConfirmation = true
+                    Button(action: { showDeleteConfirmation = true }) {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("刪除帳號")
+                        }
+                        .foregroundColor(.red)
                     }
-                    .foregroundColor(.red)
                 }
                 
                 Section("介面設定") {
                     HStack {
+                        Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
+                            .foregroundColor(isDarkMode ? .purple : .orange)
                         Toggle(isOn: $isDarkMode) {
                             Text("深色模式")
                         }
                     }
                 }
                 
-                // 新增開發者資訊連結
                 Section("其他") {
                     NavigationLink(destination: DeveloperInfoView()) {
                         HStack {
-                            Image(systemName: "info.circle")
+                            Image(systemName: "info.circle.fill")
+                                .foregroundColor(.blue)
                             Text("About me")
                         }
                     }
                 }
             }
+            .listStyle(InsetGroupedListStyle())
             .navigationTitle("設定")
-            .background(isDarkMode ? Color.black : Color.white)
+            .background(
+                isDarkMode ? 
+                Color.black.opacity(0.9) : 
+                Color.gray.opacity(0.1)
+            )
             .animation(.easeInOut, value: isDarkMode)
             .preferredColorScheme(isDarkMode ? .dark : .light)
             .onAppear {
