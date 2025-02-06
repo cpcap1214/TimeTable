@@ -28,6 +28,18 @@ struct TimeTableView: View {
     // 添加新的狀態變量
     @Environment(\.colorScheme) var colorScheme
     @State private var isSaving = false
+    @AppStorage("selectedCourseColorHex") private var selectedCourseColorHex = "3B82F6"  // 蓝色
+    @AppStorage("currentTimeColorHex") private var currentTimeColorHex = "EF4444"  // 红色
+    @State private var showingColorPicker = false
+    
+    // 添加计算属性
+    private var selectedCourseColor: Color {
+        Color(hex: selectedCourseColorHex).opacity(0.8)
+    }
+
+    private var currentTimeColor: Color {
+        Color(hex: currentTimeColorHex)
+    }
     
     var body: some View {
         NavigationView {
@@ -133,10 +145,18 @@ struct TimeTableView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showUsageInstructions.toggle()
-                    }) {
-                        Image(systemName: "questionmark.circle")
+                    HStack {
+                        Button(action: {
+                            showUsageInstructions.toggle()
+                        }) {
+                            Image(systemName: "questionmark.circle")
+                        }
+                        
+                        Button(action: {
+                            showingColorPicker.toggle()
+                        }) {
+                            Image(systemName: "paintpalette")
+                        }
                     }
                 }
             }
@@ -144,6 +164,47 @@ struct TimeTableView: View {
                 Button("關閉", role: .cancel) { }
             } message: {
                 Text("點擊方塊以選擇課程，點擊已選中的方塊以取消選擇。\n選擇完所有的課程後，請按下方的「儲存課表」按鈕。\n若想要清除課表，請按下方的「清除課表」按鈕。")
+            }
+            .sheet(isPresented: $showingColorPicker) {
+                NavigationView {
+                    List {
+                        Section("課程顏色") {
+                            ColorPicker("選擇課程顏色", selection: Binding(
+                                get: { Color(hex: selectedCourseColorHex) },
+                                set: { newColor in
+                                    if let components = newColor.cgColor?.components,
+                                       components.count >= 3 {
+                                        let r = Int(components[0] * 255)
+                                        let g = Int(components[1] * 255)
+                                        let b = Int(components[2] * 255)
+                                        selectedCourseColorHex = String(format: "%02X%02X%02X", r, g, b)
+                                    }
+                                }
+                            ))
+                            .padding(.vertical, 8)
+                        }
+                        
+                        Section("當前時間顏色") {
+                            ColorPicker("選擇當前時間顏色", selection: Binding(
+                                get: { Color(hex: currentTimeColorHex) },
+                                set: { newColor in
+                                    if let components = newColor.cgColor?.components,
+                                       components.count >= 3 {
+                                        let r = Int(components[0] * 255)
+                                        let g = Int(components[1] * 255)
+                                        let b = Int(components[2] * 255)
+                                        currentTimeColorHex = String(format: "%02X%02X%02X", r, g, b)
+                                    }
+                                }
+                            ))
+                            .padding(.vertical, 8)
+                        }
+                    }
+                    .navigationTitle("顏色設定")
+                    .navigationBarItems(trailing: Button("完成") {
+                        showingColorPicker = false
+                    })
+                }
             }
         }
     }
@@ -236,10 +297,10 @@ struct TimeTableView: View {
     // 更新顏色函數
     private func getCellColor(timeIndex: Int, dayIndex: Int) -> Color {
         if isCurrentTimeSlot(timeIndex: timeIndex) && isCurrentDay(dayIndex: dayIndex) {
-            return selectedCourses[timeIndex][dayIndex] ? .red : .red.opacity(0.3)
+            return selectedCourses[timeIndex][dayIndex] ? currentTimeColor : currentTimeColor.opacity(0.3)
         }
         if selectedCourses[timeIndex][dayIndex] {
-            return .blue.opacity(0.8)
+            return selectedCourseColor
         }
         return colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)
     }
